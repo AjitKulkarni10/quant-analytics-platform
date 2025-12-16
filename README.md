@@ -211,9 +211,10 @@ Processing Flow:
 
     Visualize: Results are presented through a real-time interactive dashboard
 
-## 12. ChatGPT Usage Transparency
+## 12. LLM Usage Transparency
 
 Including ai into normal projects helps to speed up and develop projects quickly
+
 oLLAMA is used for 
 -  Getting general information regarding quant and respective terminologies
 -  boiler plate code for websocket (than reading docs)
@@ -230,10 +231,11 @@ Prompts focused on:
 
 ## N. Future Scope & Enhancements
 The current system focuses on real-time market analytics and decision support.
+
 Several enhancements can be implemented to evolve it into a full-fledged trading platform:
-    - portfolio tracking
-    - Risk Tracking
-    - Machine learning INtroduction
-    - Further deployment
-    - Papar trading option to test current system
-    - Additional information regarding quant to add (like bias , patterns And things that i dont know right now)
+    * portfolio tracking
+    * Risk Tracking
+    * Machine learning INtroduction
+    * Further deployment
+    * Papar trading option to test current system
+    * Additional information regarding quant to add (like bias , patterns And things that i dont know right now)
