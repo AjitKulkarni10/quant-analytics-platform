@@ -14,4 +14,4 @@ ticks.db-shm
 ticks.db-wal
 *.ndjson
 t.md
-assignment.mp4
+*.mp4
