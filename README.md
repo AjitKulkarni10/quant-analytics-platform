@@ -233,9 +233,9 @@ Prompts focused on:
 The current system focuses on real-time market analytics and decision support.
 
 Several enhancements can be implemented to evolve it into a full-fledged trading platform:
-    * portfolio tracking
-    * Risk Tracking
-    * Machine learning INtroduction
-    * Further deployment
-    * Papar trading option to test current system
-    * Additional information regarding quant to add (like bias , patterns And things that i dont know right now)
+*   portfolio tracking
+*   Risk Tracking
+*   Machine learning INtroduction
+*   Further deployment
+*   Papar trading option to test current system
+*   Additional information regarding quant to add (like bias , patterns And things that i dont know right now)
