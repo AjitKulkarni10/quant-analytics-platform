@@ -20,6 +20,8 @@ import plotly.graph_objs as go
 from streamlit_autorefresh import st_autorefresh
 from streamlit.errors import StreamlitDuplicateElementKey
 
+from statsmodels.tsa.stattools import adfuller
+
 st.set_page_config(layout="wide", page_title="Realtime — Dashboard", initial_sidebar_state="expanded")
 
 # ---------- session defaults ----------
@@ -65,7 +67,6 @@ except Exception:
 # ---------- sidebar controls ----------
 with st.sidebar:
     st.title("Controls")
-
 
     symbols = st.text_input("Symbols (comma separated)", value="BTCUSDT,ETHUSDT")
     timeframe_label = st.selectbox("Timeframe", ["1s", "1m", "5m"], index=1)
@@ -157,12 +158,11 @@ def drain_queue(q, buffer, max_append=200):
             break
         buffer.append(item)
         appended += 1
-    
-    # Cap buffer size to prevent indefinite growth
+
     MAX_BUFFER_SIZE = 5000
     if len(buffer) > MAX_BUFFER_SIZE:
         buffer[:] = buffer[-MAX_BUFFER_SIZE:]
-        
+
     return appended
 
 # ---------- snapshot ----------
@@ -173,31 +173,32 @@ def take_snapshot():
         if df.empty:
             st.session_state.snapshot[sym] = None
             continue
+
         df['ts'] = pd.to_datetime(df['ts'], utc=True, errors='coerce')
         df.dropna(subset=['ts'], inplace=True)
         if df.empty:
             st.session_state.snapshot[sym] = None
             continue
+
         df.set_index('ts', inplace=True)
         ohlcv = ticks_to_ohlcv(df, timeframe_ms)
-        st.session_state.snapshot[sym] = ohlcv.copy() if not ohlcv.empty else None
+        st.session_state.snapshot[sym] = ohlcv.copy() if not ohlcv.empty else Nonee
 
 # ---------- helper fetch ----------
-def fetch_price_series(sym: str):
+def fetch_price_series(sym):
     df = pd.DataFrame([t for t in st.session_state.buffer if t['symbol'].upper() == sym.upper()])
     if df.empty:
         return pd.Series(dtype=float)
+
     df['ts'] = pd.to_datetime(df['ts'], utc=True, errors='coerce')
     df.dropna(subset=['ts'], inplace=True)
     if df.empty:
         return pd.Series(dtype=float)
+
     df.set_index('ts', inplace=True)
     return df['price'].astype(float)
 
-from statsmodels.tsa.stattools import adfuller
-
 def adf_test_series(series):
-    """Safe wrapper around adfuller that returns dict or None."""
     try:
         stat, pvalue, lags, nobs, crit, _ = adfuller(series)
         return {
@@ -209,9 +210,10 @@ def adf_test_series(series):
         }
     except Exception:
         return None
+
     
 # ---------- pair metrics ----------
-def compute_pair_metrics(left: str, right: str, window: int = 50):
+def compute_pair_metrics(left, right, window=50):
     histL = st.session_state.price_history.get(left.upper(), [])
     histR = st.session_state.price_history.get(right.upper(), [])
 
@@ -228,36 +230,23 @@ def compute_pair_metrics(left: str, right: str, window: int = 50):
     histL = histL[-2000:]
     histR = histR[-2000:]
 
-    # Synthesize time index (1-second spacing)
     tL = pd.date_range(end=pd.Timestamp.utcnow(), periods=len(histL), freq="1S")
     tR = pd.date_range(end=pd.Timestamp.utcnow(), periods=len(histR), freq="1S")
 
-    sL = pd.Series(histL, index=tL, dtype=float)
-    sR = pd.Series(histR, index=tR, dtype=float)
+    sL = pd.Series(histL, index=tL)
+    sR = pd.Series(histR, index=tR)
 
-    # Align timestamps
     sL = sL.resample("1S").last().ffill()
     sR = sR.resample("1S").last().ffill()
 
-    # Static hedge ratio (OLS)
     beta_static = ols_hedge_ratio(sL, sR)
 
-    # Dynamic hedge ratio using Kalman Filter
     beta_series = kalman_filter_beta(sL.values, sR.values)
-    beta_dynamic = beta_series[-1]    # last beta as current estimate
+    beta_dynamic = beta_series[-1]
 
-
-
-    # Spread + Z-score
-    beta = beta_dynamic   # use Kalman-updated β
-    spread, zscore = spread_and_zscore(sL, sR, beta=beta, window=window)
-
-
-    # Rolling correlation
+    spread, zscore = spread_and_zscore(sL, sR, beta=beta_dynamic, window=window)
     corr = rolling_correlation(sL, sR, window=window)
 
-    # ADF test
-    from statsmodels.tsa.stattools import adfuller
     adf_res = None
     s = spread.dropna()
     if len(s) >= 50:
@@ -268,60 +257,51 @@ def compute_pair_metrics(left: str, right: str, window: int = 50):
                 "pvalue": float(r[1]),
                 "usedlag": int(r[2]),
                 "nobs": int(r[3]),
-                "crit": r[4],
+                "crit": r[4]
             }
         except Exception:
             adf_res = None
 
-    return spread, zscore, corr, beta, beta_series, adf_res
-
-
-
-
+    return spread, zscore, corr, beta_dynamic, beta_series, adf_res
 
 
 # ---------- metrics provider for alerts ----------
 def metrics_provider(rule):
     metric = rule.get("metric")
     sym_field = (rule.get("symbol") or "").strip().upper()
+
     try:
         if metric == "price":
-            sym = sym_field or (symbols.split(",")[0].strip().upper() if symbols else None)
-            if not sym:
-                return None
+            sym = sym_field or symbols.split(",")[0].strip().upper()
             s = fetch_price_series(sym)
-            if s.empty: return None
-            return float(s.iloc[-1])
-        if metric in ("zscore","spread","adf"):
+            return float(s.iloc[-1]) if not s.empty else None
+
+        if metric in ("zscore", "spread", "adf"):
             if ":" in sym_field:
-                left,right = [p.strip().upper() for p in sym_field.split(":",1)]
+                left, right = sym_field.split(":")
             else:
                 syms = [s.strip().upper() for s in symbols.split(",") if s.strip()]
-                if len(syms) < 2:
-                    return None
-                left,right = syms[0], syms[1]
-            spread, zscore, corr, beta, beta_series, adf_res = compute_pair_metrics(left,right,window=rule.get("window",50))
+                left, right = syms[:2]
+
+            spread, zscore, _, _, _, adf_res = compute_pair_metrics(left, right, rule.get("window", 50))
+
             if metric == "spread":
                 return float(spread.iloc[-1]) if not spread.empty else None
             if metric == "zscore":
-                v = float(zscore.iloc[-1]) if not zscore.empty else None
-                return v if not (v is None or math.isnan(v)) else None
+                return float(zscore.iloc[-1]) if not zscore.empty else None
             if metric == "adf":
-                return float(adf_res['adf_stat']) if adf_res else None
+                return float(adf_res["adf_stat"]) if adf_res else None
+
         if metric == "rolling_corr":
-            if ":" in sym_field:
-                left,right = [p.strip().upper() for p in sym_field.split(":",1)]
-            else:
-                syms = [s.strip().upper() for s in symbols.split(",") if s.strip()]
-                if len(syms) < 2:
-                    return None
-                left,right = syms[0], syms[1]
-            sL = fetch_price_series(left).resample('1S').last().ffill()
-            sR = fetch_price_series(right).resample('1S').last().ffill()
-            corr = rolling_correlation(sL,sR,window=rule.get("window",50))
+            left, right = sym_field.split(":")
+            sL = fetch_price_series(left).resample("1S").last().ffill()
+            sR = fetch_price_series(right).resample("1S").last().ffill()
+            corr = rolling_correlation(sL, sR, rule.get("window", 50))
             return float(corr.iloc[-1]) if not corr.empty else None
+
     except Exception:
         return None
+
     return None
 
 # ---------- evaluate rules ----------
@@ -329,48 +309,43 @@ def evaluate_and_record():
     rules = st.session_state.alert_rules
     if not rules:
         return []
+
     events = alert_engine.evaluate_rules(rules, metrics_provider)
     if events:
-        # push events into session history
         st.session_state.alert_events.extend(events)
-        # Cap alert history
-        MAX_ALERT_HISTORY = 500
-        if len(st.session_state.alert_events) > MAX_ALERT_HISTORY:
-            st.session_state.alert_events[:] = st.session_state.alert_events[-MAX_ALERT_HISTORY:]
+        st.session_state.alert_events[:] = st.session_state.alert_events[-500:]
+
     return events
 
 # ---------- non-blocking start/stop/clear ----------
-
-
 def stop_ingestor():
     if not st.session_state.ingestor:
         return
-    
+
     st.session_state.ingestor.stop(wait_seconds=1.0)
     st.session_state.ingestor = None
-    take_snapshot() # save last state
+    take_snapshot()
     st.rerun()
 
 def clear_all():
     if st.session_state.ingestor:
         st.session_state.ingestor.stop(wait_seconds=0.5)
         st.session_state.ingestor = None
-    
+
     st.session_state.buffer = []
     st.session_state.snapshot = {}
     st.session_state.display_paused = False
     st.session_state.started_at = None
-    st.session_state.alert_events = [] # also clear alerts
-    
+    st.session_state.alert_events = []
+
     if st.session_state.db_clear_requested:
         try:
             os.remove("ticks.db")
         except Exception:
             pass
-            
-            pass
-            
+
     st.rerun()
+
 
 # ---------- start/stop wiring ----------
 if start_btn:
@@ -407,7 +382,6 @@ if inject_demo_btn:
         st.success("Injected demo tick (background)")
     else:
         st.warning("Start ingestor first")
-
 
 
 new_ticks = drain_queue(st.session_state.q, st.session_state.buffer, max_append=200)

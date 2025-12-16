@@ -1,11 +1,9 @@
-# analytics.py
 import math
 import numpy as np
 import pandas as pd
 from typing import Tuple
 
-
-def ols_hedge_ratio(y: pd.Series, x: pd.Series) -> float:
+def ols_hedge_ratio(y, x):
     df = pd.concat([y, x], axis=1).dropna()
     if df.empty:
         return 1.0
@@ -17,7 +15,7 @@ def ols_hedge_ratio(y: pd.Series, x: pd.Series) -> float:
     beta, intercept = np.linalg.lstsq(A, Y, rcond=None)[0]
     return float(beta)
 
-def spread_and_zscore(y: pd.Series, x: pd.Series, beta: float = None, window: int = 50) -> Tuple[pd.Series, pd.Series]:
+def spread_and_zscore(y, x, beta, window = 50):
     df = pd.concat([y, x], axis=1).dropna()
     if df.empty:
         return pd.Series(dtype=float), pd.Series(dtype=float)
@@ -31,7 +29,7 @@ def spread_and_zscore(y: pd.Series, x: pd.Series, beta: float = None, window: in
     z = (spread - rm) / rs
     return spread, z
 
-def rolling_correlation(s1: pd.Series, s2: pd.Series, window: int = 50) -> pd.Series:
+def rolling_correlation(s1, s2, window):
     df = pd.concat([s1, s2], axis=1).dropna()
     if df.empty:
         return pd.Series(dtype=float)
@@ -79,10 +77,9 @@ def kalman_filter_beta(y, x):
     return beta
 
 
-def trading_signal(zscore: float, entry=2.0, exit=0.5):
+def trading_signal(zscore, entry=2.0, exit=0.5):
     if zscore is None or math.isnan(zscore):
         return "NO_DATA"
-
     if zscore > entry:
         return "SELL_SPREAD → First coin expensive vs second → sell first, buy second"    # Short Y, Long X
     if zscore < -entry:

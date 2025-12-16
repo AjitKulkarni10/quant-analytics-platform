@@ -22,7 +22,7 @@ logger.addHandler(ch)
 
 
 class BinanceIngestor:
-    def __init__(self, symbols: List[str], out_queue: "queue.Queue[Dict[str,Any]]", db_path: Optional[str] = None, csv_dir: Optional[str] = "csv_data", reconnect_secs: float = 3.0):
+    def __init__(self, symbols, out_queue, db_path = None, csv_dir= "csv_data", reconnect_secs = 3.0):
         self.symbols = [s.lower() for s in symbols]
         self.out_queue = out_queue
         self.reconnect_secs = reconnect_secs
@@ -36,7 +36,7 @@ class BinanceIngestor:
         self._ws_tasks: List[asyncio.Task] = []
         self._log_lines: List[str] = []
 
-    def is_running(self) -> bool:
+    def is_running(self):
         return bool(self.running)
 
     def start(self):
@@ -49,7 +49,7 @@ class BinanceIngestor:
         self.running = True
         self._log("Ingestor thread started")
 
-    def stop(self, wait_seconds: float = 4.0):
+    def stop(self, wait_seconds= 4.0):
         self._log("Stop requested")
         self._stop_event.set()
         if self._loop and self._loop.is_running():
@@ -110,7 +110,7 @@ class BinanceIngestor:
                 self._log(f"Storage close error: {e}")
             self._log("Async main exiting")
 
-    async def _run_symbol_loop(self, symbol: str):
+    async def _run_symbol_loop(self, symbol):
         url = f"wss://fstream.binance.com/ws/{symbol}@trade"
         backoff = self.reconnect_secs
         while not self._stop_event.is_set() and not self._demo_mode:
@@ -139,7 +139,7 @@ class BinanceIngestor:
                 continue
         self._log(f"Exiting ws loop for {symbol}")
 
-    def _normalize(self, msg: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _normalize(self, msg):
         try:
             ts_ms = int(msg.get("E", msg.get("T", time.time() * 1000)))
             symbol = msg.get("s") or msg.get("symbol") or "UNKNOWN"
@@ -166,7 +166,7 @@ class BinanceIngestor:
         except Exception:
             return None
 
-    async def _handle_tick(self, tick: Dict[str, Any]):
+    async def _handle_tick(self, tick):
         try:
             self.out_queue.put_nowait(tick)
         except queue.Full:
@@ -179,7 +179,7 @@ class BinanceIngestor:
         except Exception as e:
             self._log(f"Storage enqueue error: {e}")
 
-    async def _demo_injector(self, interval_secs: float = 0.2):
+    async def _demo_injector(self, interval_secs= 0.2):
         self._log("Demo injector started")
         while not self._stop_event.is_set() and self._demo_mode:
             for sym in self.symbols:
@@ -194,7 +194,7 @@ class BinanceIngestor:
             await asyncio.sleep(interval_secs)
         self._log("Demo injector exiting")
 
-    def enable_demo_mode(self, enable: bool = True):
+    def enable_demo_mode(self, enable = True):
         self._demo_mode = bool(enable)
         self._log(f"Demo mode set to {self._demo_mode}")
         if self._demo_mode and self._loop and self._loop.is_running():
@@ -203,7 +203,7 @@ class BinanceIngestor:
             except Exception:
                 pass
 
-    def inject_demo_tick_sync(self, sym: str = "btcusdt"):
+    def inject_demo_tick_sync(self, sym= "btcusdt"):
         now_ms = int(time.time() * 1000)
         base = 90000 if sym.lower().startswith("btc") else 3000
         price = base + (random.random() - 0.5) * (base * 0.002)
@@ -236,10 +236,10 @@ class BinanceIngestor:
         except Exception as e:
             self._log(f"Shutdown storage error: {e}")
 
-    def _log(self, msg: str):
+    def _log(self, msg):
         s = f"{datetime.utcnow().isoformat()} {msg}"
         self._log_lines.append(s)
         logger.info(msg)
 
-    def get_logs(self, last_n: int = 200):
+    def get_logs(self, last_n = 200):
         return self._log_lines[-last_n:]

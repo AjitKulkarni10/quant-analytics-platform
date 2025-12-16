@@ -1,4 +1,3 @@
-# alerts.py
 from typing import List, Dict, Any, Callable
 import uuid
 from datetime import datetime, timezone
@@ -9,7 +8,7 @@ def now_iso():
 def gen_rule_id():
     return str(uuid.uuid4())
 
-def match_rule(rule: Dict[str,Any], value: float) -> bool:
+def match_rule(rule, value):
     op = rule.get("side")
     th = float(rule.get("threshold", 0.0))
     try:
@@ -27,7 +26,7 @@ def match_rule(rule: Dict[str,Any], value: float) -> bool:
         return False
     return False
 
-def evaluate_rules(rules: List[Dict[str,Any]], metrics_provider: Callable[[Dict[str,Any]], float]) -> List[Dict[str,Any]]:
+def evaluate_rules(rules, metrics_provider):
     events = []
     for r in rules:
         if not r.get("enabled", True):
