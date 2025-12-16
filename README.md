@@ -48,7 +48,8 @@ Streamlit Frontend
 Real-Time Charts • Statistics • Signals • Exports
 ```
 ![Architecture Diagram](architecture.png)
-
+(drawn with the help of eraser.io)
+![Example Usecase](assignment.mp4)
 
 ## 3. Project Structure
 
