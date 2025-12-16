@@ -3,22 +3,22 @@
 A real-time crypto market analytics dashboard built with Streamlit, providing live tick ingestion from Binance Futures, OHLCV charting, pair trading analytics, statistical signals, and a flexible alerting engine.
 This project is designed to demonstrate quantitative trading concepts, real-time data pipelines, and interactive analytics in a production-style architecture.
 
-Gemscap Assignment
+This project is developed as part of the **Gemscap Assignment** .
 
 ## 1. Overview
 
 This project is a real-time quantitative trading dashboard designed to demonstrate how live market data can be ingested, analyzed, and visualized for pairs trading and market-neutral strategies.
 
-The System demonstration:
+### The System demonstration:
 
 -   **Live tick ingestion** using Binance WebSocket(with optional demo mode)
 -   **Sampling** into OHLCV (1s, 1m, 5m)
 -   **Advanced analytics**:
-    -   Hedge Ratio estimation (OLS regression)
-    -   Dynamic Hedge Ratio (Kalman Filter)
-    -   Spread & Z-Score calculation
-    -   Rolling Correlation analysis
-    -   ADF Stationarity test 
+    *   Hedge Ratio estimation (OLS regression)
+    *   Dynamic Hedge Ratio (Kalman Filter)
+    *   Spread & Z-Score calculation
+    *   Rolling Correlation analysis
+    *   ADF Stationarity test 
 -   **Buy / Sell signal generation** based on statistical deviation
 -   **Interactive real-time dashboard** Streamlit
 -   **Alert engine** for threshold-based triggers(Z-score, spread, correlation, ADF)
@@ -26,7 +26,7 @@ The System demonstration:
 -   **Scalable backend architecture**
 
 ## 2. Architecture
-
+```
 Binance WebSocket
         ↓
 Ingestion Engine (Async / Threaded)
@@ -38,7 +38,7 @@ Resampling Engine
 (Tick → OHLCV)
         ↓
 Analytics Engine
-(OLS, Kalman β, Spread, Z-Score, Correlation, ADF)
+(OLS, β, Spread, Z-Score, Correlation, ADF)
         ↓
 Alert Engine
 (Rule-Based Triggers)
@@ -46,7 +46,6 @@ Alert Engine
 Streamlit Frontend
         ↓
 Real-Time Charts • Statistics • Signals • Exports
-
 ```
 ![Architecture Diagram](architecture.png)
 
@@ -78,8 +77,10 @@ Project/
 2.  **Create Virtual Environment**
     ```bash
     python -m venv venv
+
     # Windows
     venv\Scripts\activate
+
     # Linux/Mac
     source venv/bin/activate
     ```
@@ -87,7 +88,7 @@ Project/
 3.  **Install Dependencies**
     ```bash
     pip install -r req.txt
-    ```
+    ``` 
 
 ## 5. Running the Application
 
