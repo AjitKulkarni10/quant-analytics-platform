@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+env/
+
+
+# Streamlit
+.streamlit/
+
+# Generated Data
+ticks.db
+ticks.db-shm
+ticks.db-wal
+*.ndjson

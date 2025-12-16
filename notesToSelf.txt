@@ -1,0 +1,44 @@
+Assignment:
+1 Ingests live tick data
+2 storage
+3 analytics
+    price , hedge ratio , spread, zscore , adf , 
+    if possible more
+4 Alert system
+5 export
+
+
+Architeture diagram
+
+
+notes:
+Why resample? = to remove inconsistency(like music) -> keep it time-Based
+
+pair trade? = 
+to check Correlation (market relation?)
+neutralize risk in pair trades
+
+Hedge Ratio Estimation (OLS Regression) Y = BX + ε
+    how much of an investment position should be offset by a other investments (like futures or options) to minimize risk
+    for 1 unit of x hedge B amount of Y(in opposite direction)
+
+Spread Construction Spread = Y − βX
+    Market-neutral position
+
+
+Z-Score Normalization   Z = (Spread − μ) / σ
+    volatility
+    
+Rolling Correlation
+    to check market behaviour
+    react to changesz   
+
+Augmented Dickey-Fuller (ADF) Test
+    H0: Series has a unit root (non-stationary)
+
+Trading Signal Logic
+    entry exit
+
+Rule-Based Alert Engine
+    data to events
+    
