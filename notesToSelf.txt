@@ -10,6 +10,7 @@ Assignment:
 
 Architeture diagram
 
+dividing code making it user readable
 
 notes:
 Why resample? = to remove inconsistency(like music) -> keep it time-Based
@@ -41,4 +42,3 @@ Trading Signal Logic
 
 Rule-Based Alert Engine
     data to events
-    

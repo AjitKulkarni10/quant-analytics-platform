@@ -4,7 +4,7 @@ A real-time crypto market analytics dashboard built with Streamlit, providing li
 This project is designed to demonstrate quantitative trading concepts, real-time data pipelines, and interactive analytics in a production-style architecture.
 
 This project is developed as part of the **Gemscap Assignment** .
-
+(will convert into modular)
 ## 1. Overview
 
 This project is a real-time quantitative trading dashboard designed to demonstrate how live market data can be ingested, analyzed, and visualized for pairs trading and market-neutral strategies.
@@ -222,6 +222,7 @@ oLLAMA is used for
 -  debugging certain functionalites
 -  ReadMe Structure
 -  to kick start basic Workflow 
+-  to refactor and remove unnecessory/redundant code making it readble
 
 Prompts focused on:
 -   Improving conceptual knowledge
