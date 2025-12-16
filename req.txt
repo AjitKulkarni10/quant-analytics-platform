@@ -6,3 +6,5 @@ python-dateutil
 sqlalchemy
 aiosqlite
 plotly
+streamlit_autorefresh
+statsmodels
