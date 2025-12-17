@@ -59,10 +59,10 @@ try:
     st_autorefresh(interval=AUTORUN_INTERVAL_MS, limit=None, key="autorefresh_main_v1")
 except StreamlitDuplicateElementKey:
     # if key is already registered (rare), skip autorefresh to avoid crash
-    st.sidebar.warning("autorefresh already present — skipping duplicate registration.")
+    st.sidebar.warning("autorefresh already present — skipping duplicate registration")
 except Exception:
     # any other component error should not crash the app
-    st.sidebar.warning("autorefresh component could not be registered.")
+    st.sidebar.warning("autorefresh could not be registered.")
 
 # ---------- sidebar controls ----------
 with st.sidebar:
@@ -141,9 +141,9 @@ with st.sidebar:
 
     st.markdown("---")
 
-    demo_mode_chk = st.checkbox("Enable Demo Mode (local testing)", value=False) 
-    inject_demo_btn = st.button("Inject Demo Tick")
-    st.markdown("Use Demo Mode for local testing if websockets blocked.")
+    demo_mode_chk = st.checkbox("Enable Demo Mode", value=False) 
+    inject_demo_btn = st.button("Inject Tick")
+    st.markdown("Demo Mode for local testing")
 
     # NDJSON download
     download_ndjson = st.button("Download ticks NDJSON")
@@ -182,7 +182,7 @@ def take_snapshot():
 
         df.set_index('ts', inplace=True)
         ohlcv = ticks_to_ohlcv(df, timeframe_ms)
-        st.session_state.snapshot[sym] = ohlcv.copy() if not ohlcv.empty else Nonee
+        st.session_state.snapshot[sym] = ohlcv.copy() if not ohlcv.empty else None
 
 # ---------- helper fetch ----------
 def fetch_price_series(sym):
@@ -438,21 +438,21 @@ if page == "Graphs":
                     df = pd.DataFrame([t for t in st.session_state.buffer if t['symbol'].upper() == sym])
 
                     if df.empty:
-                        st.info("No ticks yet for " + sym)
+                        st.info("No ticks for " + sym)
                         continue
 
                     df['ts'] = pd.to_datetime(df['ts'], utc=True, errors='coerce')
                     df.dropna(subset=['ts'], inplace=True)
 
                     if df.empty:
-                        st.info("No valid timestamps yet.")
+                        st.info("No valid timestamps")
                         continue
 
                     df.set_index('ts', inplace=True)
                     ohlcv = ticks_to_ohlcv(df, timeframe_ms)
 
                 if ohlcv is None or ohlcv.empty:
-                    st.info("Not enough data to render candles.")
+                    st.info("Not enough data")
                     continue
 
                 MAX_CANDLES = 200
@@ -499,20 +499,20 @@ if page == "Graphs":
                     st.markdown("Spread")
                     st.line_chart(spread.tail(400))
                 else:
-                    st.info("Not enough pair data for spread chart.")
+                    st.info("Not enough pair data")
             with p_col2:
                 if not zscore.empty:
                     st.markdown("Z-score")
                     st.line_chart(zscore.tail(400))
                 else:
-                    st.info("Not enough pair data for zscore chart.")
+                    st.info("Not enough pair data")
             # --- Rolling correlation chart ---
             with p_col3:
                 if not corr.empty:
                     st.markdown("Rolling Correlation (50s)")
                     st.line_chart(corr.tail(400))
                 else:
-                    st.info("Not enough data for correlation chart.")
+                    st.info("Not enough data")
 
             pa_c3 = st.metric("Hedge Ratio β", f"{beta:.4f}" if beta is not None else "N/A")
 
@@ -595,7 +595,7 @@ elif page == "Statistics":
     st.markdown("---")
 
     # Row 3: Pair Analytics
-    st.markdown("#### Pair Analytics (Beta / Hedge)")
+    st.markdown("#### Pair Analytics")
     syms_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
     if len(syms_list) >= 2:
         left_sym, right_sym = syms_list[0], syms_list[1]
